@@ -53,5 +53,6 @@ urlpatterns = [
     path('api/auth/', include('emmerce_crm_backend.apps.authentication.urls')),
     path('api/leads/', include('emmerce_crm_backend.apps.leads.urls')),
     path('api/contacts/', include('emmerce_crm_backend.apps.contacts.urls')),
+    path('api/notes/', include('emmerce_crm_backend.apps.notes.urls')),
 ]
 
