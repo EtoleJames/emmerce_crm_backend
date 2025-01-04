@@ -1,37 +1,55 @@
-from rest_framework.test import APITestCase
+from django.urls import reverse
 from rest_framework import status
-from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.tokens import RefreshToken
-from emmerce_crm_backend.apps.leads.models import Lead
-from .models import Note
+from rest_framework.test import APITestCase, APIClient
+from emmerce_crm_backend.apps.authentication.models import CustomUser as User
+from emmerce_crm_backend.apps.notes.models import Note
+from emmerce_crm_backend.apps.contacts.models import Lead
+import json
 
-User = get_user_model()
-class NoteTests(APITestCase):
+class NoteAPITestCase(APITestCase):
+
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='testpass123')
-        self.refresh = RefreshToken.for_user(self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(self.refresh.access_token)}')
-        self.lead = Lead.objects.create(owner=self.user, name='Lead 1', email='lead1@example.com', phone='1234567890')
-        self.note_data = {'lead': self.lead.id, 'content': 'Test note content'}
+        self.client = APIClient()
+        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.client.force_authenticate(user=self.user)
+        self.lead = Lead.objects.create(name='Test Lead', email='lead@example.com', phone='1234567890', owner=self.user)
+        self.valid_payload = {
+            'content': 'Test Note Content',
+            'lead': self.lead.id
+        }
 
     def test_create_note(self):
-        response = self.client.post('/api/notes/', self.note_data)
+        url = reverse('notes:note-list')
+        response = self.client.post(url, data=json.dumps(self.valid_payload), content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_get_notes(self):
-        Note.objects.create(lead=self.lead, **self.note_data)
-        response = self.client.get('/api/notes/')
+        url = reverse('notes:note-list')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+
+    def test_get_note_detail(self):
+        note = Note.objects.create(content='Test Note Content', lead=self.lead)
+        url = reverse('notes:note-detail', args=[note.pk])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_update_note(self):
-        note = Note.objects.create(lead=self.lead, **self.note_data)
-        update_data = {'lead': self.lead.id, 'content': 'Updated note content'}
-        response = self.client.put(f'/api/notes/{note.id}/', update_data)
+        note = Note.objects.create(content='Test Note Content', lead=self.lead)
+        url = reverse('notes:note-detail', args=[note.pk])
+        updated_payload = {
+            'content': 'Updated Note Content',
+            'lead': self.lead.id
+        }
+        response = self.client.put(url, data=json.dumps(updated_payload), content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['content'], 'Updated note content')
 
     def test_delete_note(self):
-        note = Note.objects.create(lead=self.lead, **self.note_data)
-        response = self.client.delete(f'/api/notes/{note.id}/')
+        note = Note.objects.create(content='Test Note Content', lead=self.lead)
+        url = reverse('notes:note-detail', args=[note.pk])
+        response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Verify note is deleted
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

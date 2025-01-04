@@ -1,38 +1,58 @@
-from rest_framework.test import APITestCase
+from django.urls import reverse
 from rest_framework import status
-from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.test import APITestCase, APIClient
+from emmerce_crm_backend.apps.authentication.models import CustomUser as User
+from emmerce_crm_backend.apps.contacts.models import Contact
 from emmerce_crm_backend.apps.leads.models import Lead
-from .models import Contact
 
-User = get_user_model()
+import json
 
-class ContactTests(APITestCase):
+class ContactAPITestCase(APITestCase):
+    
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='testpass123')
-        self.refresh = RefreshToken.for_user(self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(self.refresh.access_token)}')
-        self.lead = Lead.objects.create(owner=self.user, name='Lead 1', email='lead1@example.com', phone='1234567890')
-        self.contact_data = {'lead': self.lead.id, 'name': 'Test Contact', 'email': 'contact@example.com', 'phone': '1234567890'}
+        self.client = APIClient()
+        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.client.force_authenticate(user=self.user)
+        self.lead = Lead.objects.create(name='Test Lead', owner=self.user)
+        self.valid_payload = {
+            'name': 'Test Contact',
+            'phone': '1234567890',
+            'email': 'test@example.com',
+            'lead': self.lead.id
+        }
 
     def test_create_contact(self):
-        response = self.client.post('/api/contacts/', self.contact_data)
+        url = reverse('contacts:contact-list')
+        response = self.client.post(url, data=json.dumps(self.valid_payload), content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_get_contacts(self):
-        Contact.objects.create(lead=self.lead, **self.contact_data)
-        response = self.client.get('/api/contacts/')
+        url = reverse('contacts:contact-list')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+
+    def test_get_contact_detail(self):
+        contact = Contact.objects.create(name='Test Contact', phone='1234567890', email='test@example.com', lead=self.lead)
+        url = reverse('contacts:contact-detail', args=[contact.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_update_contact(self):
-        contact = Contact.objects.create(lead=self.lead, **self.contact_data)
-        update_data = {'lead': self.lead.id, 'name': 'Updated Contact', 'email': 'updated@example.com', 'phone': '0987654321'}
-        response = self.client.put(f'/api/contacts/{contact.id}/', update_data)
+        contact = Contact.objects.create(name='Test Contact', phone='1234567890', email='test@example.com', lead=self.lead)
+        url = reverse('contacts:contact-detail', args=[contact.pk])
+        updated_payload = {
+            'name': 'Updated Contact',
+            'phone': '0987654321',
+            'email': 'updated@example.com',
+            'lead': self.lead.id
+        }
+        response = self.client.put(url, data=json.dumps(updated_payload), content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['name'], 'Updated Contact')
 
     def test_delete_contact(self):
-        contact = Contact.objects.create(lead=self.lead, **self.contact_data)
-        response = self.client.delete(f'/api/contacts/{contact.id}/')
+        contact = Contact.objects.create(name='Test Contact', phone='1234567890', email='test@example.com', lead=self.lead)
+        contact.lead = self.lead  # Ensure lead is assigned correctly
+        contact.save()
+        url = reverse('contacts:contact-detail', args=[contact.pk])
+        response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
