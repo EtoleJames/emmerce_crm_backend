@@ -1,24 +1,18 @@
-# docker-compose.yml
-version: "3.9"
+version: "3.8"
 
 services:
   web:
     build: .
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
-    environment:
-      - DJANGO_SETTINGS_MODULE=emmerce_crm_backend.settings
     depends_on:
-      - db
+      - redis
 
-  db:
-    image: postgres:13
-    env_file:
-      - .env
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+  redis:
+    image: "redis:alpine"
 
-volumes:
-  postgres_data:
+  celery_worker:
+    build: .
+    command: celery -A emmerce_crm_backend worker --loglevel=info
+    depends_on:
+      - redis

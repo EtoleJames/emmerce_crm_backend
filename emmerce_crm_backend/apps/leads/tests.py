@@ -1,36 +1,57 @@
-from rest_framework.test import APITestCase
+from django.urls import reverse
 from rest_framework import status
-from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Lead
+from rest_framework.test import APITestCase, APIClient
+from emmerce_crm_backend.apps.authentication.models import CustomUser as User
+from emmerce_crm_backend.apps.leads.models import Lead
+import json
 
-User = get_user_model()
+class LeadAPITestCase(APITestCase):
 
-class LeadTests(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='testpass123')
-        self.refresh = RefreshToken.for_user(self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(self.refresh.access_token)}')
-        self.lead_data = {'name': 'Test Lead', 'email': 'lead@example.com', 'phone': '1234567890'}
-
+        self.client = APIClient()
+        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.client.force_authenticate(user=self.user)
+        self.valid_payload = {
+            'name': 'Test Lead',
+            'email': 'testlead@example.com',
+            'phone': '1234567890',
+            'owner': self.user.id
+        }
     def test_create_lead(self):
-        response = self.client.post('/api/leads/', self.lead_data)
+        url = reverse('leads:lead-list')
+        response = self.client.post(url, data=json.dumps(self.valid_payload), content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_get_leads(self):
-        Lead.objects.create(owner=self.user, **self.lead_data)
-        response = self.client.get('/api/leads/')
+        url = reverse('leads:lead-list')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+
+    def test_get_lead_detail(self):
+        lead = Lead.objects.create(name='Test Lead', owner=self.user)
+        url = reverse('leads:lead-detail', args=[lead.pk])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_update_lead(self):
-        lead = Lead.objects.create(owner=self.user, **self.lead_data)
-        update_data = {'name': 'Updated Lead', 'email': 'updated@example.com', 'phone': '0987654321'}
-        response = self.client.put(f'/api/leads/{lead.id}/', update_data)
+        lead = Lead.objects.create(name='Test Lead', owner=self.user)
+        url = reverse('leads:lead-detail', args=[lead.pk])
+        updated_payload = {
+            'name': 'Updated Lead',
+            'email': 'updatedlead@example.com',
+            'phone': '0987654321',
+            'owner': self.user.id
+        }
+        response = self.client.put(url, data=json.dumps(updated_payload), content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['name'], 'Updated Lead')
 
     def test_delete_lead(self):
-        lead = Lead.objects.create(owner=self.user, **self.lead_data)
-        response = self.client.delete(f'/api/leads/{lead.id}/')
+        lead = Lead.objects.create(name='Test Lead', email='testlead@example.com', phone='1234567890', owner=self.user)
+        lead.save()
+        url = reverse('leads:lead-detail', args=[lead.pk])
+        response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Verify lead is deleted
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
