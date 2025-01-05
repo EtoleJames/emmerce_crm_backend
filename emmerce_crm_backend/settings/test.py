@@ -16,6 +16,8 @@ DATABASES = {
     }
 }
 
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
+
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DOMAIN = config('DOMAIN', default='')
 
