@@ -5,14 +5,7 @@ services:
     build: .
     ports:
       - "8000:8000"
-    depends_on:
-      - redis
-
+    environment:
+      - DEBUG=1
   redis:
-    image: "redis:alpine"
-
-  celery_worker:
-    build: .
-    command: celery -A emmerce_crm_backend worker --loglevel=info
-    depends_on:
-      - redis
+    image: redis:alpine

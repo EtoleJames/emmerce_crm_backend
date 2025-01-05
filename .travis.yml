@@ -1,15 +1,21 @@
 language: python
-# python versions
 python:
-  - "3.4"
-  - "2.7.4"
-env: -DJANGO=1.8 DB=sqlite3
-# install requirements
+  - "3.10.12"
+# command to install dependencies
 install:
   - pip install -r requirements.txt
   - pip install coveralls
-# To run tests
+  - pip install coverage
+
+# command to run tests
 script:
-  - coverage run --source='emmerce_crm_backend' manage.py test
-# send coverage report to coveralls
-after_success: coveralls
+  - python manage.py makemigrations --settings=emmerce_crm_backend.settings.test
+  - python manage.py migrate --settings=emmerce_crm_backend.settings.test
+  - coverage run --source=emmerce_crm_backend.apps ./manage.py test --settings=emmerce_crm_backend.settings.test
+
+after_script:
+  - coverage xml
+
+after_success:
+  - coverallslanguage: python
+  - coveralls
