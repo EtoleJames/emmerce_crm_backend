@@ -5,7 +5,9 @@
 
 ## Project Description
 
-**Emmerce Mini CRM** is a comprehensive backend application built with Django and Django REST Framework to manage leads, contacts, notes, and reminders effectively. It is designed to demonstrate best practices in building RESTful APIs, asynchronous task management using Celery with Redis, and secure authentication using JSON Web Tokens (JWT). This project also includes a structured and scalable folder hierarchy to ensure maintainability and extensibility. You can use this link to visit the site. It is hosted in Railway.
+**Emmerce Mini CRM** is a comprehensive backend application built with Django and Django REST Framework to manage leads, contacts, notes, and reminders effectively. It is designed to demonstrate best practices in building RESTful APIs, asynchronous task management using Celery with Redis, and secure authentication using JSON Web Tokens (JWT). This project also includes a structured and scalable folder hierarchy to ensure maintainability and extensibility. You can use this swagger link to visit the site. It is hosted in Railway.
+
+[https://emmercecrmbackend-production.up.railway.app/swagger](https://emmercecrmbackend-production.up.railway.app/swagger)
 
 ---
 
