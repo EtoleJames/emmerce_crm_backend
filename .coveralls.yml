@@ -1,0 +1,13 @@
+service_name: github
+repo_token: 3PgIJBmR6jh4TaQzh0N7yMuCVwVIG7dil
+
+coverage:
+  status:
+    project:
+      default:
+        enabled: true
+    patch:
+      default:
+        enabled: true
+
+github_actions: true
