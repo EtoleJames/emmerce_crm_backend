@@ -2,6 +2,7 @@ from emmerce_crm_backend.settings.base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
 
 
 DATABASES = {

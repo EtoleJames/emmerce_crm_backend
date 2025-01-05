@@ -3,6 +3,8 @@ from emmerce_crm_backend.settings.base import *
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
+
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 

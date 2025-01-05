@@ -13,8 +13,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from decouple import Config, RepositoryEnv
 
-# Load configuration from .env file
-config = Config(RepositoryEnv('.env'))
+env_path = '.env'
+if os.path.exists(env_path):
+    config = Config(RepositoryEnv(env_path))
+else:
+    config = Config(os.environ)
 
 from pathlib import Path
 
@@ -30,8 +33,6 @@ SECRET_KEY = config('SECRET_KEY', default='#dfhewy73ewrsacdswy3e88Y@Y828Y@91')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
-
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
 
 
 # Application definition
@@ -51,7 +52,6 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
     
     'emmerce_crm_backend.apps.authentication.apps.AuthenticationConfig',
     'emmerce_crm_backend.apps.contacts.apps.ContactsConfig',
@@ -77,15 +77,19 @@ ROOT_URLCONF = 'emmerce_crm_backend.urls'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
-STATIC_ROOT = os.path.join(BASE_DIR, '/static')
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'static_files/')
 
-STATIC_URL = '/static/'
+# STATIC_URL = '/static/'
+# STATIC_ROOT = os.path.join(BASE_DIR, "static_files")
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static_files/')
-]
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, 'static_files/')
+# ]
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'static_files/')
+# MEDIA_URL = '/media/'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 TEMPLATES = [
     {
@@ -178,8 +182,8 @@ REST_FRAMEWORK = {
 }
 
 # set the celery config
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
+CELERY_BROKER_URL =  config('CELERY_BROKER_URL', default='redis://localhost:6379/0'),
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/1'),
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
