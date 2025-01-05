@@ -3,16 +3,23 @@ version: "3.8"
 services:
   web:
     build: .
+    command: gunicorn emmerce_crm_backend.wsgi:application --bind 0.0.0.0:8000
     ports:
       - "8000:8000"
     depends_on:
       - redis
+    environment:
+      - REDIS_HOST=redis
 
-  redis:
-    image: "redis:alpine"
-
-  celery_worker:
+  worker:
     build: .
     command: celery -A emmerce_crm_backend worker --loglevel=info
     depends_on:
       - redis
+    environment:
+      - REDIS_HOST=redis
+
+  redis:
+    image: redis:6.2
+    ports:
+      - "6379:6379"

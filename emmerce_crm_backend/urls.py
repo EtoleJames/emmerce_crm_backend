@@ -22,7 +22,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView
 )
-# import settings
+from django.conf import settings
 
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -57,3 +57,5 @@ urlpatterns = [
     path('api/reminders/', include('emmerce_crm_backend.apps.reminders.urls')),
 ]
 
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

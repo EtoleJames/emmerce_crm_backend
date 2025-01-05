@@ -9,6 +9,7 @@ from emmerce_crm_backend.apps.reminders.tasks import send_reminder_email
 from django.utils.timezone import now, timedelta
 import json
 
+
 class ReminderAPITestCase(APITestCase):
 
     def setUp(self):
