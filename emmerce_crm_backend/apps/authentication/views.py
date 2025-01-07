@@ -6,7 +6,9 @@ from .serializers import UserSerializer, LogoutSerializer, LoginSerializer
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from .models import CustomUser
 from drf_yasg.utils import swagger_auto_schema
+import json
 
 User = get_user_model()
 
@@ -26,11 +28,18 @@ class LoginView(APIView):
             email=serializer.validated_data['email'],
             password=serializer.validated_data['password']
         )
+        user_data = CustomUser.objects.filter(email=user.email).first() 
+            
         if user:
             refresh = RefreshToken.for_user(user)
             return Response({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
+                'current_user': {
+                    "email": user_data.email,
+                    "phone": user_data.phone,
+                    "id": user_data.id
+                }
             })
         return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
